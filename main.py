@@ -1,3 +1,5 @@
+from requests.compat import basestring
+
 import apiKey
 import requests
 import time
@@ -157,7 +159,7 @@ def search_movie(session, movie, movie_resolution, movie_type):
 
     if movie_type:
         url += f"&types[0]={movie_type}"
-    
+
     while True:
         response = session.get(url)
         if response.status_code == 429:
@@ -187,6 +189,7 @@ def search_show(session, tvdb_id, sleep_time=INITIAL_SLEEP_TIME):
             time.sleep(INITIAL_SLEEP_TIME)  # Respectful delay
             return torrents
 
+
 def get_movie_resolution(movie):
     # get resolution from radarr if missing try pull from media info
     try:
@@ -199,6 +202,7 @@ def get_movie_resolution(movie):
     except KeyError:
         movie_resolution = None
     return movie_resolution
+
 
 # Function to process each movie
 def process_movie(session, movie, not_found_file):
@@ -222,6 +226,16 @@ def process_movie(session, movie, not_found_file):
 
     try:
         video_type = movie.get("movieFile").get("quality").get("quality").get("modifier")
+        if (video_type is None or video_type.lower() == "none") and "relativePath" in movie.get("movieFile"):
+            file_info = guessit(movie.get("movieFile").get("relativePath"))
+            # check if results is string or list
+            if isinstance(file_info["other"], list):
+                for other in file_info["other"]:
+                    if other.upper() in TYPE_MAP.keys():
+                        video_type = other
+                        break
+            else:
+                video_type = file_info["other"]
         aither_type = TYPE_MAP.get(video_type.upper())
         movie_resolution = get_movie_resolution(movie)
         aither_resolution = RESOLUTION_MAP.get(str(movie_resolution))
