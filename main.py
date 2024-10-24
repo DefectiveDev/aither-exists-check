@@ -208,7 +208,7 @@ def process_movie(session, movie, not_found_file):
     # verify radarr actually has a file entry if not skip check and save api call
     if not "movieFile" in movie:
         logger.info(
-            f"[Skipped: local]. No file found in radarr for {title}"
+            f"[Missing]. Skipped no file found in radarr for {title}"
         )
         return
 
@@ -216,7 +216,7 @@ def process_movie(session, movie, not_found_file):
     if "releaseGroup" in movie["movieFile"] and \
             movie["movieFile"]["releaseGroup"].casefold() in map(str.casefold, BANNED_GROUPS):
         logger.info(
-            f"[Banned: local] group for {title}"
+            f"[Banned: group] search skipped for {title}"
         )
         return
 
@@ -254,8 +254,10 @@ def process_movie(session, movie, not_found_file):
             if "release_group" in release_info \
                     and release_info["release_group"].casefold() in map(str.casefold, BANNED_GROUPS):
                 logger.info(
-                    f"[Trumpable: Banned] group for {title} [{movie_resolution} {video_type}] on AITHER"
+                    f"[Trumpable: Banned group] [{movie_resolution} {video_type}] on AITHER"
                 )
+                movie_file = movie["movieFile"]["path"]
+                not_found_file.write(f"{movie_file}\n")
             else :
                 logger.info(
                      f"[{movie_resolution} {video_type}] already exists on AITHER"
